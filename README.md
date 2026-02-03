@@ -1,8 +1,8 @@
-# Suomi Scraper 🇫🇮
+# Suomi Scraper
 
-A powerful tool to scrape Finnish texts (News, LDS Scriptures), lemmatize words to their base form (using **Voikko**), translate them to English (using **Deep Translator**), and export **Anki-ready flashcards**.
+A tool to scrape Finnish texts (News, LDS Scriptures), lemmatize words to their base form (using **Voikko**), translate them to English (using **Deep Translator**), and export **Anki-ready flashcards**.
 
-## ✨ Features
+## Features
 
 - **Multi-Source Scraping**: Support for generic Finnish websites (Yle, HS) and LDS Scriptures (recursive integration).
 - **Intelligent NLP**: Converts inflected words (e.g., *'taloissa'*) to base forms (*'talo'*).
@@ -10,7 +10,7 @@ A powerful tool to scrape Finnish texts (News, LDS Scriptures), lemmatize words 
 - **Translation Caching**: Saves translations locally to speed up subsequent runs.
 - **GUI & CLI**: Use the visual dashboard or the command line.
 
-## 🚀 Setup
+##  Setup
 
 1.  **Install System Dependencies (LibVoikko)**
     *   **Mac**: `brew install libvoikko`
@@ -21,9 +21,9 @@ A powerful tool to scrape Finnish texts (News, LDS Scriptures), lemmatize words 
     pip install -r requirements.txt
     ```
 
-## 🖥️ Usage
+## Usage
 
-### Graphical Interface (Recommended)
+### Graphical Interface 
 Launch the visual dashboard to scrape URLs, batch process list, and edit cards before downloading.
 
 ```bash
@@ -37,7 +37,7 @@ streamlit run gui.py
 python3 main.py "https://yle.fi/uutiset/osasto/selkouutiset/"
 ```
 
-**Scrape an entire book (e.g., Pearl of Great Price):**
+**Scrape an entire book (e.g., Book of Mormon):**
 ```bash
 python3 main.py "https://www.churchofjesuschrist.org/study/scriptures/pgp?lang=fin" --recursive
 ```
