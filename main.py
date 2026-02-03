@@ -153,10 +153,16 @@ def main():
                 translation = ""
                 if not args.no_translate:
                     translation = translator.translate(lemma)
+                    
+                    # Filter: Identical (English or Failed)
+                    if translation.lower() == lemma.lower():
+                         logger.info(f"Skipping {lemma} (translation identical/English)")
+                         continue
                 else:
                     translation = "[SKIPPED]"
                 
-                if translation in ["[No translation found]", "[Not Found]", "[Error]"]:
+                # Filter: Explicit Errors
+                if translation in ["[No translation found]", "[Not Found]", "[Error]", ""]:
                     logger.info(f"Skipping {lemma} (no translation found)")
                     continue
                 

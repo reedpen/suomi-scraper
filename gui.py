@@ -176,11 +176,15 @@ if st.button("Start Scraping", type="primary", disabled=not enable_start):
                 translation = ""
                 if not no_translate:
                     translation = translator.translate(lemma)
+                    
+                    # Filter identicals (English/Failed) if we are filtering
+                    if filter_untranslated and translation.lower() == lemma.lower():
+                        continue
                 else:
                     translation = "[SKIPPED]"
                 
-                # Filter untranslated
-                if filter_untranslated and translation in ["[No translation found]", "[Not Found]", "[Error]"]:
+                # Filter explicit errors
+                if filter_untranslated and translation in ["[No translation found]", "[Not Found]", "[Error]", ""]:
                     continue
                     
                 card = {
