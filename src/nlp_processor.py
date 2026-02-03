@@ -1,0 +1,89 @@
+import libvoikko
+import logging
+import re
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class VoikkoProcessor:
+    def __init__(self, lang="fi"):
+        try:
+            self.v = libvoikko.Voikko(lang)
+            logger.info("Voikko initialized successfully.")
+        except Exception as e:
+            logger.error(f"Failed to initialize Voikko: {e}")
+            raise e
+
+    def lemmatize(self, text: str) -> list[str]:
+        """
+        Tokenizes text and returns a list of base forms (lemmas).
+        Filters out punctuation and numbers.
+        """
+        # Simple tokenization: split by whitespace and strip punctuation
+        # This is a basic approach; Voikko has tokenization but it's often easier to do custom regex for Anki decks
+        
+        # Remove punctuation characters
+        clean_text = re.sub(r'[^\w\s]', '', text)
+        words = clean_text.split()
+        
+        lemmas = []
+        lemmas = []
+        possible_name_classes = {'nimi', 'etunimi', 'sukunimi', 'paikannimi'}
+        
+        for word in words:
+            # Skip numbers
+            if word.isdigit():
+                continue
+            
+            # Check capitalization before lowercasing for analysis
+            is_capitalized = word[0].isupper()
+            
+            # Voikko analyzes case-insensitively usually if we pass lowercase, 
+            # but for name detection often good to know original.
+            # We'll analyze the lowercase version to find the lemma.
+            analysis_list = self.v.analyze(word.lower())
+            
+            if analysis_list:
+                # Check the first analysis result (usually the most probable)
+                first_analysis = analysis_list[0]
+                word_class = first_analysis.get('CLASS', '')
+                
+                # Filter out known names
+                if word_class in possible_name_classes:
+                    continue
+                    
+                base_form = first_analysis.get('BASEFORM', word.lower())
+                lemmas.append(base_form)
+            else:
+                # If unknown (e.g., proper noun or foreign word)
+                # If it was capitalized (and not at start of sentence?), it's likely a name like "Nefi".
+                # However, we don't know sentence position here easily since we split list.
+                # Heuristic: If unknown and capitalized, likely a name. 
+                # If unknown and lowercase, maybe a typo or rare word.
+                # User asked to filter names.
+                if is_capitalized:
+                    continue
+                    
+                # If unknown and not capitalized, we might keep it or drop it.
+                # Let's keep it to be safe, might be a complex inflection Voikko missed (unlikely for Voikko)
+                # or a typo.
+                lemmas.append(word.lower())
+                
+        return lemmas
+
+    def analyze_word(self, word: str) -> dict:
+        """Returns full analysis for a single word."""
+        results = self.v.analyze(word)
+        if results:
+            return results[0]
+        return {}
+
+if __name__ == "__main__":
+    vp = VoikkoProcessor()
+    
+    test_sentence = "Minä asuin taloissa ja juoksin metsissä."
+    print(f"Original: {test_sentence}")
+    print(f"Lemmas: {vp.lemmatize(test_sentence)}")
+    
+    complex_word = "juoksisinko"
+    print(f"Word: {complex_word} -> {vp.analyze_word(complex_word).get('BASEFORM')}")
