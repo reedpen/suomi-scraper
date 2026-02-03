@@ -23,6 +23,7 @@ def main():
     parser.add_argument("--file", help="Text file with list of URLs to scrape (one per line)")
     parser.add_argument("--recursive", action="store_true", help="Recursively find chapters from the provided URL")
     parser.add_argument("--vocab", action="store_true", help="Print current vocabulary (translation cache)")
+    parser.add_argument("--clear-cache", action="store_true", help="Clear the translation cache and exit")
     # parser.add_argument("--strict", action="store_true", help="Strict Mode: Discard words that Voikko cannot analyze (removes non-Finnish)")
     parser.add_argument("--append", action="store_true", help="Append to output file instead of overwriting")
     args = parser.parse_args()
@@ -39,6 +40,9 @@ def main():
             logger.info(f"Recursive crawl finished. Found {len(urls)} URLs.")
         else:
             urls = [args.url]
+    elif args.vocab or args.clear_cache:
+        # Allow pass-through if only vocab/clear-cache is requested
+        pass
     else:
         parser.error("Must provide either URL or --file")
 
@@ -51,7 +55,13 @@ def main():
         logger.critical(f"Initialization failed: {e}")
         return
 
-    # 1b. Vocab View
+    # 1b. Vocab View / Clear Cache
+    if args.clear_cache:
+        logger.info("Clearing vocabulary cache...")
+        translator.clear_cache()
+        logger.info("Cache cleared successfully.")
+        return
+
     if args.vocab:
         logger.info("Dumping vocabulary cache...")
         vocab = translator.get_cache_as_list()
@@ -61,20 +71,6 @@ def main():
         writer.writeheader()
         writer.writerows(vocab)
         return
-
-    # 2. Scrape Content
-    # ... (rest of main) ... (we need to be careful with replace range here)
-    # Actually I just need to insert the Vocab block after initialization.
-    
-    # And then update the lemmatize call later.
-    
-    # Let's do a multi-replace to target both areas safely? 
-    # Or just replace the Init block to add Vocab, and then replace the Loop block to add strict.
-    # Single replace is cleaner if I target the right spots.
-    
-    # This replace handles the Init + Vocab.
-    
-    # 2. Scrape Content
 
     # 2. Scrape Content
     # Iterate over all URLs and collect all sentences
@@ -127,8 +123,6 @@ def main():
     logger.info(f"Processing and writing to {args.output}...")
     
     fieldnames = ["Front", "Back", "Tags"]
-    
-    seen_lemmas = set()
     
     seen_lemmas = set()
     

@@ -63,6 +63,9 @@ python3 main.py --file links.txt --output master_deck.csv --append
 
 # View your vocabulary cache
 python3 main.py --vocab
+
+# Clear the cache (reset vocabulary)
+python3 main.py --clear-cache
 ```
 
 ## 📂 Output

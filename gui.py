@@ -79,6 +79,13 @@ with tab4:
              v_df = pd.DataFrame(vocab_list)
              st.dataframe(v_df, width=1000) 
              st.metric("Total Words", len(vocab_list))
+             
+             if st.button("Clear Cache", type="primary", help="Permanently delete translation cache"):
+                 tmp_trans.clear_cache()
+                 st.success("Cache cleared!")
+                 time.sleep(1)
+                 st.rerun()
+
         else:
              st.info("Cache is empty.")
     except Exception as e:

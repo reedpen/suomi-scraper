@@ -71,6 +71,16 @@ class TranslatorService:
         """Returns the cache as a list of dicts for display."""
         return [{"Finnish": k, "English": v} for k, v in self.cache.items()]
 
+    def clear_cache(self):
+        """Clears the in-memory cache and deletes the cache file."""
+        self.cache = {}
+        if os.path.exists(self.cache_file):
+            try:
+                os.remove(self.cache_file)
+                logger.info("Cache file deleted.")
+            except Exception as e:
+                logger.error(f"Failed to delete cache file: {e}")
+
 if __name__ == "__main__":
     t = TranslatorService()
     words = ["koira", "talo", "epäonnistua", "vilpitön"]
