@@ -14,12 +14,12 @@ class VoikkoProcessor:
             logger.error(f"Failed to initialize Voikko: {e}")
             raise e
 
-    def lemmatize(self, text: str, strict: bool = False) -> list[str]:
+    def lemmatize(self, text: str, strict: bool = True) -> list[str]:
         """
         Tokenizes text and returns a list of base forms (lemmas).
         Filters out punctuation and numbers.
         Args:
-            strict (bool): If True, discards words that Voikko cannot analyze (e.g., foreign words).
+            strict (bool): If True, discards words that Voikko cannot analyze (e.g., foreign words). Defaults to True.
         """
         # Simple tokenization: split by whitespace and strip punctuation
         # This is a basic approach; Voikko has tokenization but it's often easier to do custom regex for Anki decks

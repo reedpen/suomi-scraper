@@ -6,7 +6,7 @@ A tool to scrape Finnish texts (News, LDS Scriptures), lemmatize words to their 
 
 - **Multi-Source Scraping**: Support for generic Finnish websites (Yle, HS) and LDS Scriptures (recursive integration).
 - **Document Support**: Scrape text from local **PDF**, **DOCX**, and **TXT** files.
-- **Strict Mode**: Optional filtering to strictly enforce Finnish-only words, removing English/foreign noise.
+- **Strict Logic**: Automatically enforces Finnish-only filtering, discarding foreign words (e.g., English) that cannot be analyzed.
 - **Vocabulary Viewer**: View your local translation cache directly.
 - **Append Mode**: Add new cards to an existing deck instead of starting over.
 - **Intelligent NLP**: Converts inflected words (e.g., *'taloissa'*) to base forms (*'talo'*).
@@ -58,8 +58,8 @@ python3 main.py my_document.pdf
 
 **Advanced Usage:**
 ```bash
-# Strict mode (Finnish only) and Append to existing file
-python3 main.py --file links.txt --output master_deck.csv --strict --append
+# Append to existing file (merging results)
+python3 main.py --file links.txt --output master_deck.csv --append
 
 # View your vocabulary cache
 python3 main.py --vocab

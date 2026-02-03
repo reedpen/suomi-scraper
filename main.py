@@ -23,7 +23,7 @@ def main():
     parser.add_argument("--file", help="Text file with list of URLs to scrape (one per line)")
     parser.add_argument("--recursive", action="store_true", help="Recursively find chapters from the provided URL")
     parser.add_argument("--vocab", action="store_true", help="Print current vocabulary (translation cache)")
-    parser.add_argument("--strict", action="store_true", help="Strict Mode: Discard words that Voikko cannot analyze (removes non-Finnish)")
+    # parser.add_argument("--strict", action="store_true", help="Strict Mode: Discard words that Voikko cannot analyze (removes non-Finnish)")
     parser.add_argument("--append", action="store_true", help="Append to output file instead of overwriting")
     args = parser.parse_args()
     
@@ -146,7 +146,7 @@ def main():
         
         card_count = 0
         for i, sentence in enumerate(sentences):
-            lemmas_in_sentence = vp.lemmatize(sentence, strict=args.strict)
+            lemmas_in_sentence = vp.lemmatize(sentence) # Default is now strict=True
             
             for lemma in lemmas_in_sentence:
                 # Skip short words or unwanted

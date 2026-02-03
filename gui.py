@@ -27,7 +27,7 @@ with st.sidebar:
     no_translate = st.checkbox("Disable Translation (Dry Run)", value=False)
     filter_names = st.checkbox("Filter Proper Nouns", value=True)
     filter_untranslated = st.checkbox("Filter Untranslated Words", value=True)
-    strict_mode = st.checkbox("Strict Mode (Finnish Only)", value=True, help="Discards any word Voikko cannot analyze. Removes English/Foreign words.")
+    # strict_mode = st.checkbox("Strict Mode (Finnish Only)", value=True, help="Discards any word Voikko cannot analyze. Removes English/Foreign words.")
     
     st.info("System Requirements: LibVoikko must be installed on the host machine.")
 
@@ -150,7 +150,7 @@ if st.button("Start Scraping", type="primary", disabled=not enable_start):
 
         # Process words
         for sentence in sentences:
-            lemmas = vp.lemmatize(sentence, strict=strict_mode) # Pass strict flag
+            lemmas = vp.lemmatize(sentence) # Default is now strict=True
             # Note: The NLP processor logic currently filters names hardcoded. 
             # If we want to toggle it via UI, we might need to modify VoikkoProcessor to accept a flag.
             # For now, it respects the current codebase logic which filters names.
