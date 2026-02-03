@@ -9,6 +9,7 @@ from src.scraper_generic import scrape_generic
 from src.scraper_lds import scrape_lds_chapter
 from src.nlp_processor import VoikkoProcessor
 from src.translator import TranslatorService
+from src.document_loader import DocumentLoader
 
 # Configure logging to capture in UI? 
 # For now, standard logging, maybe redirect to st.empty() later if needed.
@@ -26,13 +27,15 @@ with st.sidebar:
     no_translate = st.checkbox("Disable Translation (Dry Run)", value=False)
     filter_names = st.checkbox("Filter Proper Nouns", value=True)
     filter_untranslated = st.checkbox("Filter Untranslated Words", value=True)
+    strict_mode = st.checkbox("Strict Mode (Finnish Only)", value=True, help="Discards any word Voikko cannot analyze. Removes English/Foreign words.")
     
     st.info("System Requirements: LibVoikko must be installed on the host machine.")
 
 # --- Main Area ---
-tab1, tab2 = st.tabs(["Single URL", "Batch Processing"])
+tab1, tab2, tab3, tab4 = st.tabs(["Single URL", "Batch Processing", "File Upload", "Vocabulary"])
 
 urls_to_process = []
+file_obj_to_process = None
 
 from src.crawler import LDSCrawler
 
@@ -55,12 +58,43 @@ with tab2:
     if batch_input:
         urls_to_process = [line.strip() for line in batch_input.split('\n') if line.strip()]
 
+with tab3:
+    uploaded_file = st.file_uploader("Choose a file", type=['pdf', 'docx', 'txt'])
+    if uploaded_file:
+        file_obj_to_process = uploaded_file
+        file_name_to_process = uploaded_file.name
+        # Clear others to avoid confusion?
+        urls_to_process = [] 
+
+with tab4:
+    st.header("Vocabulary Cache")
+    st.caption("All words previously translated and stored locally.")
+    try:
+        # We need a translator instance to get cache
+        # Lazy init or just init it here?
+        tmp_trans = TranslatorService()
+        vocab_list = tmp_trans.get_cache_as_list()
+        
+        if vocab_list:
+             v_df = pd.DataFrame(vocab_list)
+             st.dataframe(v_df, width=1000) 
+             st.metric("Total Words", len(vocab_list))
+        else:
+             st.info("Cache is empty.")
+    except Exception as e:
+        st.error(f"Could not load vocabulary: {e}")
+
 # --- Action ---
-if st.button("Start Scraping", type="primary", disabled=not urls_to_process):
+# Enable button if URL list OR file is present
+enable_start = bool(urls_to_process or file_obj_to_process)
+
+if st.button("Start Scraping", type="primary", disabled=not enable_start):
     
     # Initialize Components
     status_text = st.empty()
     progress_bar = st.progress(0)
+    
+    doc_loader = DocumentLoader() # Init loader
     
     # Pre-flight: Recursive Crawl
     if recursive_mode and url_input and urls_to_process == [url_input]:
@@ -85,30 +119,38 @@ if st.button("Start Scraping", type="primary", disabled=not urls_to_process):
     all_cards = []
     seen_lemmas = set()
     
-    total_steps = len(urls_to_process)
-    
     # 1. Scrape & Process Loop
-    for i, url in enumerate(urls_to_process):
+    # Adjust loop to handle either URLs OR the single file
+    
+    items_to_process = urls_to_process if urls_to_process else [file_name_to_process]
+    total_steps = len(items_to_process)
+
+    for i, item in enumerate(items_to_process):
         progress = (i / total_steps)
         progress_bar.progress(progress)
-        status_text.text(f"Processing ({i+1}/{total_steps}): {url}")
+        status_text.text(f"Processing ({i+1}/{total_steps}): {item}")
         
-        # Scrape
+        # Scrape / Load
         sentences = []
         try:
-            if "churchofjesuschrist.org" in url:
-                sentences = scrape_lds_chapter(url)
+            if file_obj_to_process and item == file_name_to_process:
+                # IT'S A FILE
+                raw_text = doc_loader.load_file(file_obj_to_process, file_name_to_process)
+                sentences = [s.strip() for s in raw_text.split('\n') if s.strip()]
+            
+            elif "churchofjesuschrist.org" in item:
+                sentences = scrape_lds_chapter(item)
             else:
-                raw = scrape_generic(url)
+                raw = scrape_generic(item)
                 if raw:
                     sentences = [s.strip() for s in raw.split('\n') if s.strip()]
         except Exception as e:
-            st.error(f"Error scraping {url}: {e}")
+            st.error(f"Error processing {item}: {e}")
             continue
 
         # Process words
         for sentence in sentences:
-            lemmas = vp.lemmatize(sentence) # This now includes name filtering if configured in NLP? 
+            lemmas = vp.lemmatize(sentence, strict=strict_mode) # Pass strict flag
             # Note: The NLP processor logic currently filters names hardcoded. 
             # If we want to toggle it via UI, we might need to modify VoikkoProcessor to accept a flag.
             # For now, it respects the current codebase logic which filters names.
@@ -154,15 +196,36 @@ if 'cards' in st.session_state and st.session_state['cards']:
     df = pd.DataFrame(st.session_state['cards'])
     
     # Editable Table
-    edited_df = st.data_editor(df, num_rows="dynamic", use_container_width=True)
+    edited_df = st.data_editor(df, num_rows="dynamic", width=1000)
     
+    # Merge Option
+    st.divider()
+    st.subheader("Merge with Existing Deck")
+    merge_file = st.file_uploader("Upload existing CSV to append new cards to:", type=["csv"])
+    
+    final_df = df
+    if merge_file:
+        try:
+            existing_df = pd.read_csv(merge_file, sep=';')
+            st.info(f"Loaded existing deck with {len(existing_df)} cards.")
+            
+            # Concat
+            combined_df = pd.concat([existing_df, df], ignore_index=True)
+            # Remove duplicates based on 'Front'?
+            combined_df.drop_duplicates(subset=['Front'], keep='last', inplace=True) # Keep new ones? Or old? Let's keep last (newest)
+            
+            st.success(f"Merged! Total cards: {len(combined_df)}")
+            final_df = combined_df
+        except Exception as e:
+            st.error(f"Error merging files: {e}")
+
     # Convert to CSV for download
-    csv = edited_df.to_csv(sep=';', index=False).encode('utf-8')
+    csv = final_df.to_csv(sep=';', index=False).encode('utf-8')
     
     st.download_button(
         label="Download Anki Deck (CSV)",
         data=csv,
-        file_name="anki_deck.csv",
+        file_name="anki_deck_merged.csv" if merge_file else "anki_deck.csv",
         mime="text/csv",
     )
 elif 'cards' in st.session_state:

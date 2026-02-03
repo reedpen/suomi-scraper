@@ -67,6 +67,10 @@ class TranslatorService:
             logger.error(f"Translation error for {word}: {e}")
             return "[Error]"
 
+    def get_cache_as_list(self) -> list[dict]:
+        """Returns the cache as a list of dicts for display."""
+        return [{"Finnish": k, "English": v} for k, v in self.cache.items()]
+
 if __name__ == "__main__":
     t = TranslatorService()
     words = ["koira", "talo", "epäonnistua", "vilpitön"]

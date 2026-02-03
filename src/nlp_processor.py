@@ -14,10 +14,12 @@ class VoikkoProcessor:
             logger.error(f"Failed to initialize Voikko: {e}")
             raise e
 
-    def lemmatize(self, text: str) -> list[str]:
+    def lemmatize(self, text: str, strict: bool = False) -> list[str]:
         """
         Tokenizes text and returns a list of base forms (lemmas).
         Filters out punctuation and numbers.
+        Args:
+            strict (bool): If True, discards words that Voikko cannot analyze (e.g., foreign words).
         """
         # Simple tokenization: split by whitespace and strip punctuation
         # This is a basic approach; Voikko has tokenization but it's often easier to do custom regex for Anki decks
@@ -26,7 +28,6 @@ class VoikkoProcessor:
         clean_text = re.sub(r'[^\w\s]', '', text)
         words = clean_text.split()
         
-        lemmas = []
         lemmas = []
         possible_name_classes = {'nimi', 'etunimi', 'sukunimi', 'paikannimi'}
         
@@ -56,11 +57,12 @@ class VoikkoProcessor:
                 lemmas.append(base_form)
             else:
                 # If unknown (e.g., proper noun or foreign word)
-                # If it was capitalized (and not at start of sentence?), it's likely a name like "Nefi".
-                # However, we don't know sentence position here easily since we split list.
-                # Heuristic: If unknown and capitalized, likely a name. 
-                # If unknown and lowercase, maybe a typo or rare word.
-                # User asked to filter names.
+                if strict:
+                    # In strict mode, we drop EVERYTHING that Voikko doesn't recognize.
+                    # This filters English words, typos, and names Voikko didn't catch.
+                    continue
+
+                # Normal mode heuristics
                 if is_capitalized:
                     continue
                     

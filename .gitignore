@@ -6,6 +6,5 @@ venv/
 .DS_Store
 translation_cache.json
 debug_*.py
-.agent/
 docs/
 tests/
