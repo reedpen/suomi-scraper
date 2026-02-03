@@ -119,8 +119,13 @@ if st.button("Start Scraping", type="primary", disabled=not enable_start):
         vp = VoikkoProcessor()
         translator = TranslatorService()
     except Exception as e:
-        st.error(f"Failed to initialize components: {e}")
-        st.stop()
+        if "LibVoikko" in str(e):
+            st.error("Missing System Dependency: LibVoikko")
+            st.warning("On Streamlit Cloud, make sure 'packages.txt' contains 'libvoikko1' and 'voikko-fi'.")
+            st.stop()
+        else:
+            st.error(f"Failed to initialize components: {e}")
+            st.stop()
 
     # Data collection
     all_cards = []

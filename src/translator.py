@@ -72,14 +72,13 @@ class TranslatorService:
         return [{"Finnish": k, "English": v} for k, v in self.cache.items()]
 
     def clear_cache(self):
-        """Clears the in-memory cache and deletes the cache file."""
+        """Clears the in-memory cache and overwrites the file with check empty JSON."""
         self.cache = {}
-        if os.path.exists(self.cache_file):
-            try:
-                os.remove(self.cache_file)
-                logger.info("Cache file deleted.")
-            except Exception as e:
-                logger.error(f"Failed to delete cache file: {e}")
+        try:
+            self._save_cache()
+            logger.info("Cache file reset to empty.")
+        except Exception as e:
+            logger.error(f"Failed to reset cache file: {e}")
 
 if __name__ == "__main__":
     t = TranslatorService()

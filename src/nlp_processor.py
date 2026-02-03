@@ -1,12 +1,26 @@
-import libvoikko
 import logging
 import re
+import sys
 
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Try to import libvoikko; handle failure gracefully so app doesn't crash on start
+LIBVOIKKO_AVAILABLE = False
+try:
+    import libvoikko
+    LIBVOIKKO_AVAILABLE = True
+except ImportError:
+    logger.warning("libvoikko python package not found.")
+except OSError:
+    logger.warning("libvoikko shared library not found.")
+
 class VoikkoProcessor:
     def __init__(self, lang="fi"):
+        if not LIBVOIKKO_AVAILABLE:
+            raise RuntimeError("LibVoikko library not found. Please ensure it is installed (apt-get install libvoikko1 voikko-fi).")
+            
         try:
             self.v = libvoikko.Voikko(lang)
             logger.info("Voikko initialized successfully.")

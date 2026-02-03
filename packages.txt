@@ -1,0 +1,3 @@
+libvoikko1
+libvoikko-dev
+voikko-fi
